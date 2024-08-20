@@ -21,11 +21,32 @@ defmodule CambridgeScraper do
     {:ok, document} = Floki.parse_document(html)
 
     titles = Floki.find(document, "div.di-title")
-    definitions = Floki.find(document, "div.def.ddef_d.db")
+
+    definitions =
+      Floki.find(document, "div.def.ddef_d.db")
+      |> Floki.traverse_and_update(fn
+        {"div", params, children} ->
+          {"div", params,
+           [
+             children
+             |> Enum.map_join(" ",
+               &case &1 do
+                 {"a", _, text} -> Enum.join(text, " ") |> String.trim()
+                 text when is_binary(text) -> String.trim(text)
+               end
+             )
+           ]}
+
+        other ->
+          other
+      end)
 
     Enum.zip(titles, definitions)
     |> Enum.map(fn {title, definition} ->
-      %{title: Floki.text(title), definition: Floki.text(definition)}
+      %{
+        title: title |> Floki.text(),
+        definition: definition |> Floki.text()
+      }
     end)
   end
 end
