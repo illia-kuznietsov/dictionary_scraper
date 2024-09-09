@@ -15,6 +15,17 @@ defmodule WebsterScraper do
   defp parse_html(html) do
     {:ok, document} = Floki.parse_document(html)
 
-    
+    titles = Floki.find(document, ".hword")
+
+    definitions =
+      Floki.find(document, "span.dtText")
+
+    Enum.zip(titles, definitions)
+    |> Enum.map(fn {title, definition} ->
+      %{
+        title: title |> Floki.text(),
+        definition: definition |> Floki.text(sep: " ") |> String.replace(~r/\s+/, " ")
+      }
+    end)
   end
 end

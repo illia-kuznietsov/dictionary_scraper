@@ -27,28 +27,12 @@ defmodule CambridgeScraper do
 
     definitions =
       Floki.find(document, "div.def.ddef_d.db")
-      |> Floki.traverse_and_update(fn
-        {"div", params, children} ->
-          {"div", params,
-           [
-             children
-             |> Enum.map_join(" ",
-               &case &1 do
-                 {"a", _, text} -> Enum.join(text, " ") |> String.trim()
-                 text when is_binary(text) -> String.trim(text)
-               end
-             )
-           ]}
-
-      #   other ->
-      #     other
-      # end)
 
     Enum.zip(titles, definitions)
     |> Enum.map(fn {title, definition} ->
       %{
         title: title |> Floki.text(),
-        definition: definition |> Floki.text()
+        definition: definition |> Floki.text(sep: " ") |> String.replace(~r/\s+/, " ")
       }
     end)
   end
